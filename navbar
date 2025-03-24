@@ -1,0 +1,122 @@
+import React, { useState, useEffect } from 'react';
+import { X } from "lucide-react"; // Importing the Close icon
+
+const Navbar = () => {
+  const [scrolling, setScrolling] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // Toggle for click
+
+  const menuItems = {
+    "Country": ["UK", "USA", "CANADA", "AUSTRALIA", "NETHERLANDS", "SOUTH-AFRICA", "SCHENGEN-COUNTRIES"],
+    "Coaching": ["IELTS", "TOEFL", "PTE"],
+    "Visa": ["Student Visa", "Work Visa"]
+  };
+
+  useEffect(() => {
+    const handleScroll = () => setScrolling(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 shadow-lg ${scrolling ? 'bg-orange-500' : 'bg-[#353949] opacity-80'}`}>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <div className="text-white text-xl font-bold">VisaPro</div>
+
+          {/* Desktop Navbar */}
+          <div className="hidden lg:gap-6 xl:gap-0 md:flex lg:flex items-center space-x-6 cursor-pointer">
+            <a href="#" className="text-white hover:text-gray-200 px-4 py-2">Home</a>
+            <a href="#" className="text-white hover:text-gray-200 px-4 py-2">About</a>
+
+            {/* Dropdowns for Desktop with Hover & Click */}
+            {Object.keys(menuItems).map((title) => (
+              <div 
+                key={title} 
+                className="relative group cursor-pointer"
+                onMouseEnter={() => setOpenDropdown(title)} 
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
+                <button 
+                  className="text-white hover:text-gray-200 px-4 py-2 flex items-center gap-1 cursor-pointer "
+                  onClick={() => setOpenDropdown(openDropdown === title ? null : title)}
+                >
+                  {title}
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${openDropdown === title ? 'rotate-180' : 'group-hover:rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu (Hover or Click to Open) */}
+                <div className={`absolute top-full left-0 bg-white min-w-[200px] rounded-lg shadow-lg transition-all duration-300 
+                  ${openDropdown === title ? "opacity-100 visible" : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"}`}>
+                  {menuItems[title].map((submenu) => (
+                    <a key={submenu} href="#" className="block w-full text-left px-6 py-3 text-gray-800 hover:bg-orange-500 hover:text-white border-b border-gray-100 last:border-0 transition-colors duration-300 rounded">
+                      {submenu}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <a href="#" className="text-white hover:text-gray-200 px-4 py-2">Blog</a>
+            <a href="#" className="text-white hover:text-gray-200 px-4 py-2">Contact</a>
+            <button className="ml-4 bg-white text-orange-500 px-6 py-2 rounded-lg hover:bg-gray-100">Apply Now</button>
+          </div>
+
+          {/* Mobile Menu Button with Dynamic Icon */}
+          <button 
+            className="lg:hidden text-white p-2" 
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? (
+              <X className="w-6 h-6 text-white" /> // Close icon when menu is open
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+              </svg> // Hamburger icon when menu is closed
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Navbar */}
+        {menuOpen && (
+          <div className="lg:hidden flex flex-col space-y-2 bg-[#353949] text-white p-4 rounded-lg shadow-lg">
+            <a href="#" className="hover:text-gray-300 py-2">Home</a>
+            <a href="#" className="hover:text-gray-300 py-2">About</a>
+
+            {/* Mobile Dropdowns (Click to open) */}
+            {Object.keys(menuItems).map((title) => (
+              <div key={title} className="group">
+                <button 
+                  className="w-full text-left text-white flex justify-between py-2"
+                  onClick={() => setOpenDropdown(openDropdown === title ? null : title)}
+                >
+                  {title}
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${openDropdown === title ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Mobile Submenus */}
+                {openDropdown === title && (
+                  <div className="pl-4">
+                    {menuItems[title].map((submenu) => (
+                      <a key={submenu} href="#" className="block py-2 text-gray-300 hover:text-white">{submenu}</a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <a href="#" className="hover:text-gray-300 py-2">Blog</a>
+            <a href="#" className="hover:text-gray-300 py-2">Contact</a>
+            <button className="mt-2 bg-white text-orange-500 px-6 py-2 rounded-lg hover:bg-gray-100">Apply Now</button>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
