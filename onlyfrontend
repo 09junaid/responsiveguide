@@ -1,0 +1,292 @@
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+
+export default function SigninPage() {
+  const {
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors },
+  } = useForm();
+
+  const [records, setRecords] = useState(() => {
+    const storedData = localStorage.getItem("record");
+    return storedData ? JSON.parse(storedData) : [];
+  });
+
+  const [editIndex, setEditIndex] = useState(null); // Track the index being edited
+
+  useEffect(() => {
+    localStorage.setItem("record", JSON.stringify(records));
+  }, [records]);
+
+  const handleAddOrUpdate = (data) => {
+    if (editIndex !== null) {
+      // Update existing record
+      const updatedRecords = [...records];
+      updatedRecords[editIndex] = data;
+      setRecords(updatedRecords);
+      setEditIndex(null); // Reset edit index
+    } else {
+      // Add new record
+      setRecords([...records, data]);
+    }
+    reset(); // Clear the form
+  };
+
+  const handleEdit = (index) => {
+    setEditIndex(index);
+    reset(records[index]); // Pre-fill the form with the selected record
+  };
+
+  const handleDelete = (index) => {
+    const updatedRecords = records.filter((_, i) => i !== index);
+    setRecords(updatedRecords);
+  };
+
+  return (
+    <>
+      <div className="flex flex-col items-center">
+        <form
+          onSubmit={handleSubmit(handleAddOrUpdate)}
+          className="flex flex-col items-center"
+        >
+          <label className="text-2xl font-bold">Email</label>
+          <input
+            type="email"
+            placeholder="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                message: "Enter a valid email",
+              },
+            })}
+            className="p-2 outline rounded-lg"
+          />
+          <span className="text-red-500 text-sm mt-1">
+            {errors.email && <p>{errors.email.message}</p>}
+          </span>
+
+          <label className="text-2xl font-bold">Password</label>
+          <input
+            type="password"
+            placeholder="password"
+            {...register("password", {
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters long",
+              },
+            })}
+            className="p-2 outline rounded-lg"
+          />
+          <span className="text-red-500 text-sm mt-1">
+            {errors.password && <p>{errors.password.message}</p>}
+          </span>
+
+          <button
+            type="submit"
+            className="bg-black text-white p-4 cursor-pointer mt-3 rounded-md"
+          >
+            {editIndex !== null ? "Update" : "Login"}
+          </button>
+        </form>
+
+        {/* Displaying records */}
+        <div className="mt-5">
+          <h2 className="text-xl font-bold">Submitted Data:</h2>
+          <ul>
+            {records.map((item, index) => (
+              <li key={index} className="border p-2 my-2 rounded-md">
+                <p>Email: {item.email}</p>
+                <p>Password: {item.password}</p>
+                <button
+                  onClick={() => handleEdit(index)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded-md mr-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(index)}
+                  className="bg-red-500 text-white px-3 py-1 rounded-md"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </>
+  );
+}
+/*without usehook from*/
+import React, { useEffect, useState } from 'react';
+
+export default function Home() {
+  const [inputData, setInputData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
+
+  const [record, setRecord] = useState([]);
+  const [isEdit, setEdit] = useState(null);
+  const [isSearch,setSearch]=useState("")
+
+  // ✅ Load Data from LocalStorage on Component Mount
+  useEffect(() => {
+    const storeData=localStorage.getItem("record");
+    if(storeData){
+      try {
+        const parseData=JSON.parse(storeData);
+        if(Array.isArray(parseData)){
+          setRecord(parseData)
+        }else{
+          console.log("corrupted Data were not showing");
+          localStorage.removeItem('record')
+        }
+      } catch (error) {
+        console.log("error")
+      }
+    }
+  }, []);
+
+  // ✅ Save Data to LocalStorage whenever `record` updates
+  useEffect(() => {
+    if (record.length > 0) {
+      localStorage.setItem('record', JSON.stringify(record));
+    }
+  }, [record]);
+
+  const handleInput = (e) => {
+    const { name, value } = e.target;
+    setInputData({ ...inputData, [name]: value });
+  };
+
+  const handleSubmit = () => {
+    if (!inputData.name || !inputData.email || !inputData.phone || !inputData.address) {
+      alert('Please fill up all fields');
+      return;
+    }
+
+    if (isEdit !== null) {
+      const updatedData = record.map((item, index) => (index === isEdit ? inputData : item));
+      setRecord(updatedData);
+      setEdit(null);
+    } else {
+      setRecord([...record, inputData]);
+    }
+
+    setInputData({
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+    });
+  };
+
+  const handleEdit = (index) => {
+    setInputData(record[index]);
+    setEdit(index);
+  };
+
+  const handleDelete = (index) => {
+    if (window.confirm('Are you sure you want to delete this record?')) {
+      const updatedRecords = record.filter((_, id) => id !== index);
+      setRecord(updatedRecords);
+
+      if (updatedRecords.length === 0) {
+        localStorage.removeItem('record'); // ✅ Remove localStorage if empty
+      }
+    }
+  };
+
+const searchData=record.filter((item)=>(
+  item.name.toLowerCase().toUpperCase().includes(isSearch.toLowerCase().toUpperCase())
+))
+
+const handleAsc=()=>{
+  const sorted=[...record].sort((a,b)=>a.name.localeCompare(b.name))
+  setRecord(sorted)
+}
+const handleDesc=()=>{
+ const unsorted=[...record].sort((a,b)=>b.name.localeCompare(a.name))
+ setRecord(unsorted)
+}
+  return (
+    <>
+      <input type="text" name="name" value={inputData.name} onChange={handleInput} placeholder="Name" required />
+      <input type="email" name="email" value={inputData.email} onChange={handleInput} placeholder="Email" required />
+      <input type="number" name="phone" value={inputData.phone} onChange={handleInput} placeholder="Phone" required />
+      <input type="text" name="address" value={inputData.address} onChange={handleInput} placeholder="Address" required />
+      {isEdit !== null ? <button onClick={handleSubmit}>Update</button> : <button onClick={handleSubmit}>Add</button>}
+
+      <div>
+        <input type="text" placeholder='search...' value={isSearch} onChange={(e)=>setSearch(e.target.value)}/>
+       
+        {searchData.length > 0 ? (
+          searchData.map((item, index) => (
+            <ul key={index}>
+              <li>{item.name}</li>
+              <li>{item.email}</li>
+              <li>{item.phone}</li>
+              <li>{item.address}</li>
+              <li>
+                <button onClick={() => handleEdit(index)}>Edit</button>
+                <button onClick={() => handleDelete(index)}>Delete</button>
+              </li>
+            </ul>
+            
+          ))
+          
+        ) : (
+          <p>No records found.</p>
+        )}
+         <button onClick={handleAsc}>Asc</button>
+         <button onClick={handleDesc}>Desc</button>
+      </div>
+    </>
+  );
+}
+/*Image viewer*/
+import React, { useState } from 'react'
+
+export default function ImageView() {
+  const [image,setImage]=useState(null);
+  const [preview,setPreview]=useState(null);
+
+
+  const handleImageChange=(e)=>{
+    const file=e.target.files[0];
+    if(file){
+      setImage(file);
+      const reader=new FileReader();
+      reader.onloadend=()=>{
+        setPreview(reader.result)
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!image) return alert("Please select an image!");
+  
+    const formData = new FormData();
+    formData.append("file", image);
+  
+    console.log("Payload ready to send:", formData.get("file"));
+  };
+  return (
+    <div>
+      <h1>Image Preview</h1>
+      <form onSubmit={handleSubmit}>
+        <input type="file" accept='image/*'onChange={handleImageChange}/>
+        {preview && <img src={preview} alt='preview' width="100"/>}
+        <button type='submit'>Upload</button>
+      </form>
+    </div>
+  )
+}
